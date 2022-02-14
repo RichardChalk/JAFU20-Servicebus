@@ -1,9 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Azure.Messaging.ServiceBus;
-
-
-
-
+using Newtonsoft.Json;
 
 SenderEntry.Run();
 
@@ -24,6 +21,11 @@ internal class SenderEntry
     // number of messages to be sent to the queue
     private const int numOfMessages = 3;
 
+    public class Person
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+    }
 
     public static void Run()
     {
@@ -35,12 +37,32 @@ internal class SenderEntry
         client = new ServiceBusClient(connectionString);
         sender = client.CreateSender(queueName);
 
+        // This is our list of people
+        var people = new List<Person>();
+
+        people.Add(new Person()
+        {
+            Name = "King Richard",
+            Age = 21,
+        });
+        people.Add(new Person()
+        {
+            Name = "Quenn Savi",
+            Age = 21,
+        });
+        people.Add(new Person()
+        {
+            Name = "Gypsy Filip",
+            Age = 21,
+        });
+
+
         // create a batch 
         using ServiceBusMessageBatch messageBatch = sender.CreateMessageBatchAsync().GetAwaiter().GetResult();
 
-        for (int i = 1; i <= numOfMessages; i++)
+        foreach (var person in people)
         {
-            sender.SendMessageAsync(new ServiceBusMessage($"Message {i}"));
+            sender.SendMessageAsync(new ServiceBusMessage(JsonConvert.SerializeObject(person)));
         }
 
         sender.DisposeAsync();
